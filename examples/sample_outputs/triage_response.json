@@ -1,0 +1,36 @@
+{
+  "alert_id": "SENT-2025-01-30-0042",
+  "summary": "A Finance department user received a phishing email with a macro-enabled Word document. The user opened the attachment, which triggered PowerShell to execute an encoded command attempting to download a payload from a known malicious C2 server associated with FIN7.",
+  "risk_score": 9,
+  "risk_reasoning": "High risk due to: (1) Confirmed execution chain from email attachment to PowerShell, (2) C2 domain matches known FIN7 infrastructure with 78% confidence, (3) Target user is in Finance with access to sensitive financial data, (4) Asset criticality is high. This appears to be an active compromise requiring immediate containment.",
+  "key_findings": [
+    "Macro-enabled document (Q4_Report.docm) opened by user triggered PowerShell execution",
+    "PowerShell attempted to download payload from known FIN7 C2 infrastructure",
+    "User is in Finance department with potential access to sensitive financial systems",
+    "No prior alerts for this user - this is first suspicious activity",
+    "Workstation was recently patched (2025-01-15) but Office macros were not blocked"
+  ],
+  "investigation_steps": [
+    "Immediately isolate workstation WS-JD-001 via Defender for Endpoint to prevent lateral movement",
+    "Check if PowerShell download succeeded - query DeviceNetworkEvents for connections to 203.0.113.50",
+    "Review DeviceProcessEvents for any child processes spawned by the PowerShell command",
+    "Search for the email across all mailboxes and purge any unread instances",
+    "Contact user john.doe@company.com to confirm they did not expect this document and gather additional context"
+  ],
+  "suggested_queries": {
+    "kql": "// Check for successful C2 connection and follow-on activity\nDeviceNetworkEvents\n| where TimeGenerated > ago(4h)\n| where DeviceName == \"WS-JD-001\"\n| where RemoteIP == \"203.0.113.50\" or RemoteUrl contains \"malicious-c2.com\"\n| project TimeGenerated, ActionType, RemoteIP, RemotePort, RemoteUrl, InitiatingProcessFileName\n| order by TimeGenerated asc",
+    "spl": "index=endpoint host=\"WS-JD-001\" earliest=-4h\n| search (dest_ip=\"203.0.113.50\" OR dest_host=\"*malicious-c2.com*\")\n| table _time, action, dest_ip, dest_port, dest_host, process_name\n| sort _time"
+  },
+  "mitre_context": "This attack chain maps to: T1566.001 (Spearphishing Attachment) → T1059.001 (PowerShell) → T1105 (Ingress Tool Transfer). This is a classic FIN7 initial access technique targeting financial sector employees with macro-enabled documents.",
+  "suggested_actions": [
+    "Isolate endpoint WS-JD-001 immediately",
+    "Disable user account john.doe@company.com pending investigation",
+    "Block sender domain suspicious-domain.com at email gateway",
+    "Add C2 domain malicious-c2.com and IP 203.0.113.50 to firewall block list",
+    "Purge email from all mailboxes organization-wide",
+    "Notify Finance BISO of potential compromise in their department"
+  ],
+  "escalation_recommended": true,
+  "escalation_reason": "Risk score 9/10 with confirmed execution and FIN7 attribution. Finance user with potential access to sensitive data. Requires immediate L2/L3 engagement and potential incident declaration.",
+  "processing_time_ms": 2340
+}

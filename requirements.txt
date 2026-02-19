@@ -1,0 +1,24 @@
+# SOC Copilot Dependencies
+
+# Core API
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+
+# Azure OpenAI
+openai>=1.10.0
+
+# Slack Integration
+slack-bolt>=1.18.0
+slack-sdk>=3.26.0
+
+# HTTP Client
+requests>=2.31.0
+httpx>=0.26.0
+
+# Data Processing
+python-dateutil>=2.8.2
+
+# Azure SDK (for enrichment)
+azure-identity>=1.15.0
+azure-search-documents>=11.4.0
