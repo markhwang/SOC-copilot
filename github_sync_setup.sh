@@ -15,7 +15,7 @@
 GITHUB_TOKEN="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"        # ← paste your token here (ghp_xxxxxxxxxxxx)
 GITHUB_USER="markhwang"
 REPO_NAME="SOC-copilot"
-REMOTE_URL="https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${REPO_NAME}.git"
+REMOTE_URL="https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${REPO_NAME}"
 
 # ---------------------------------------------------------------
 if [ -z "$GITHUB_TOKEN" ]; then
