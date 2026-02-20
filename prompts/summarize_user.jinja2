@@ -1,0 +1,91 @@
+Triage the following security alert and return your assessment as JSON.
+
+## Alert
+
+- ID: {{ alert.alert_id }}
+- Source: {{ alert.source.value }}
+- Severity: {{ alert.severity.value }}
+- Time: {{ alert.timestamp.isoformat() }}
+- Title: {{ alert.title }}
+
+{{ alert.description }}
+
+{% if alert.mitre_tactics or alert.mitre_techniques %}
+## MITRE ATT&CK
+
+{% if alert.mitre_tactics %}
+Tactics: {{ alert.mitre_tactics | join(', ') }}
+{% endif %}
+{% if alert.mitre_techniques %}
+Techniques: {{ alert.mitre_techniques | join(', ') }}
+{% endif %}
+{% endif %}
+
+## Entities
+
+- Users: {{ alert.entities.users | join(', ') if alert.entities.users else 'none' }}
+- Hosts: {{ alert.entities.hosts | join(', ') if alert.entities.hosts else 'none' }}
+- IPs: {{ alert.entities.ips | join(', ') if alert.entities.ips else 'none' }}
+{% if alert.entities.files %}
+- Files: {{ alert.entities.files | map(attribute='name') | join(', ') }}
+{% endif %}
+{% if alert.entities.urls %}
+- URLs: {{ alert.entities.urls | join(', ') }}
+{% endif %}
+{% if alert.entities.domains %}
+- Domains: {{ alert.entities.domains | join(', ') }}
+{% endif %}
+
+{% if enrichment.users %}
+## User Context (Entra ID)
+
+{% for upn, user in enrichment.users.items() %}
+- {{ upn }}
+  Title: {{ user.job_title if user.job_title else 'unknown' }}
+  Department: {{ user.department if user.department else 'unknown' }}
+  {% if user.risk_level %}Risk level: {{ user.risk_level }}{% endif %}
+  {% if user.risk_score is not none %}Risk score: {{ user.risk_score }}/100{% endif %}
+  {% if user.mfa_enabled is not none %}MFA enabled: {{ user.mfa_enabled }}{% endif %}
+  {% if user.account_enabled is not none %}Account enabled: {{ user.account_enabled }}{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if enrichment.assets %}
+## Asset Context (CMDB)
+
+{% for hostname, asset in enrichment.assets.items() %}
+- {{ hostname }}
+  Criticality: {{ asset.criticality if asset.criticality else 'unknown' }}
+  {% if asset.business_unit %}Business unit: {{ asset.business_unit }}{% endif %}
+  {% if asset.environment %}Environment: {{ asset.environment }}{% endif %}
+  {% if asset.owner_upn %}Owner: {{ asset.owner_upn }}{% endif %}
+  {% if asset.last_patched %}Last patched: {{ asset.last_patched }}{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if enrichment.threat_intel %}
+## Threat Intelligence
+
+{% for hit in enrichment.threat_intel %}
+- {{ hit.ioc_type | upper }} {{ hit.ioc_value }}: {{ hit.reputation }}{% if hit.threat_actor %} (attributed to {{ hit.threat_actor }}){% endif %}
+  Confidence: {{ hit.confidence }}, Source: {{ hit.source }}{% if hit.tags %}, Tags: {{ hit.tags | join(', ') }}{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if enrichment.historical_alert_count > 0 %}
+## Historical Context
+
+Alerts in last 30 days for these entities: {{ enrichment.historical_alert_count }}
+{% if enrichment.similar_alert_ids %}
+Similar alert IDs: {{ enrichment.similar_alert_ids | join(', ') }}
+{% endif %}
+{% endif %}
+
+{% if enrichment.enrichment_errors %}
+## Enrichment Gaps
+
+The following lookups failed — factor this into your confidence_score:
+{% for err in enrichment.enrichment_errors %}
+- {{ err }}
+{% endfor %}
+{% endif %}
