@@ -187,6 +187,7 @@ class TestQueryIO:
         inp = QueryInput(question="Show me failed logins for this user in the last 24 hours.")
         assert inp.target_platform == "both"
         assert inp.alert is None
+        assert inp.execute is False
 
     def test_input_with_alert_context(self):
         inp = QueryInput(
@@ -201,6 +202,10 @@ class TestQueryIO:
         inp = QueryInput(question="Any lateral movement?", target_platform="spl")
         assert inp.target_platform == "spl"
 
+    def test_input_execute_flag(self):
+        inp = QueryInput(question="Show failed logins.", execute=True)
+        assert inp.execute is True
+
     def test_output_with_both_queries(self):
         out = QueryOutput(
             kql="SigninLogs | where UserPrincipalName == 'user@corp.com'",
@@ -210,6 +215,8 @@ class TestQueryIO:
         assert out.kql is not None
         assert out.spl is not None
         assert out.performance_notes is None
+        assert out.results is None
+        assert out.results_truncated is False
 
     def test_output_kql_only(self):
         out = QueryOutput(
@@ -230,6 +237,28 @@ class TestQueryIO:
             performance_notes="This query scans a large time range — add a where clause to narrow scope.",
         )
         assert out.performance_notes is not None
+
+    def test_output_with_executed_results(self):
+        out = QueryOutput(
+            kql="SigninLogs | take 2",
+            explanation="Sign-in events.",
+            results=[
+                {"TimeGenerated": "2025-01-30T14:28:00Z", "UserPrincipalName": "john.doe@corp.com", "ResultType": 0},
+                {"TimeGenerated": "2025-01-30T14:30:00Z", "UserPrincipalName": "john.doe@corp.com", "ResultType": 50126},
+            ],
+            results_truncated=False,
+        )
+        assert len(out.results) == 2
+        assert out.results_truncated is False
+
+    def test_output_results_truncated_flag(self):
+        out = QueryOutput(
+            kql="SecurityEvent | take 1000",
+            explanation="Large result set.",
+            results=[{"EventID": 4625}] * 500,
+            results_truncated=True,
+        )
+        assert out.results_truncated is True
 
 
 # ---------------------------------------------------------------------------

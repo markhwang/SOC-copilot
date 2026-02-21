@@ -83,6 +83,7 @@ class QueryInput(BaseModel):
     question: str
     alert: Optional[AlertPayload] = None   # optional alert context
     target_platform: str = "both"          # "kql" | "spl" | "both"
+    execute: bool = False                  # if True, run the query via the integration client
 
 
 class QueryOutput(BaseModel):
@@ -90,6 +91,8 @@ class QueryOutput(BaseModel):
     spl: Optional[str] = None
     explanation: str
     performance_notes: Optional[str] = None
+    results: Optional[list[dict]] = None   # populated when execute=True
+    results_truncated: bool = False        # True if result set was capped
 
 
 # ---------------------------------------------------------------------------

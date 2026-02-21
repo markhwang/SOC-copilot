@@ -91,9 +91,11 @@ src/
     index.py                 # Build and query vector index (Chroma local, AI Search prod)
 
   integrations/
-    sentinel.py              # Sentinel REST API client (alert polling + webhook ingestion)
-    splunk.py                # Splunk REST API client
-    defender.py              # Microsoft Defender API client
+    sentinel_ingest.py       # Sentinel: validate webhook signature, normalize alert → AlertPayload
+    sentinel_query.py        # Sentinel: execute KQL against Log Analytics API → results (on-demand)
+    splunk_ingest.py         # Splunk: normalize inbound notable event → AlertPayload
+    splunk_query.py          # Splunk: execute SPL search job against Splunk REST API → results (on-demand)
+    defender.py              # Microsoft Defender API client (alert polling)
     graph.py                 # Microsoft Graph API (Entra ID user lookups)
     cmdb.py                  # CMDB REST API client (asset criticality)
     threat_intel.py          # MISP / VirusTotal / AbuseIPDB client
@@ -226,6 +228,24 @@ Never commit `.env`. It is gitignored.
 ## Git sync
 
 ```bash
-./git_sync.sh "your commit message"
+git push origin main   # gh CLI handles auth — no PAT needed
 ```
-Or use GitHub Desktop. Repo: https://github.com/markhwang/SOC-copilot
+Repo: https://github.com/markhwang/SOC-copilot
+
+---
+
+## Session logging (required)
+
+At the **start** of every session:
+1. Read `memory/MEMORY.md` and `memory/sessions.md` to restore context on project state, last commit, and next steps.
+
+At the **end** of every session (or after any meaningful block of work):
+1. Append a new entry to `memory/sessions.md` with: date, commit hash, files created/modified, and design decisions made.
+2. Update `memory/MEMORY.md` to reflect the new project state (last commit, build order progress, next step).
+
+Memory files live at:
+```
+~/.claude/projects/-Users-markhwang-Library-Mobile-Documents-com-apple-CloudDocs-dev-SOC-copilot-soc-copilot/memory/
+  MEMORY.md      # project state snapshot — loaded into context each session
+  sessions.md    # append-only change log — one entry per session
+```
